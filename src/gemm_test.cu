@@ -4,9 +4,18 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cmath>
+#include <fstream>
+#include <functional>
 #include <iostream>
+#include <thread>
+#include <vector>
 
 using namespace xitren::math;
+using namespace std::literals;
 
 void
 print_device_info()
@@ -24,66 +33,66 @@ print_device_info()
     std::cout << std::endl;
 }
 
+using time_type = std::chrono::microseconds;
+
 struct measurement {
     std::size_t us;
     std::size_t cycles;
 };
 
-// template <typename T,
-//           typename std::enable_if<std::is_same<T, float>::value || std::is_same<T,
-//           double>::value,
-//                                   bool>::type
-//           = true>
-// measurement
-// profile_gemm(size_t m, size_t k, size_t n, T const* A_host, T const* B_host, T* C_host)
-// {
-//     constexpr size_t       num_repeats = 10;
-//     constexpr size_t       num_warmups = 10;
-//     constexpr unsigned int seed        = 0U;
+auto
+measure(std::function<std::size_t(void)> callback)
+{
+    using time       = std::chrono::high_resolution_clock;
+    using fsec       = std::chrono::duration<float>;
+    auto      t0     = time::now();
+    auto      cycles = callback();
+    auto      t1     = time::now();
+    fsec      fs     = t1 - t0;
+    time_type d      = std::chrono::duration_cast<time_type>(fs);
+    return measurement{static_cast<std::size_t>(d.count()), cycles};
+}
 
-//     T const alpha{static_cast<T>(1.0)};
-//     T const beta{static_cast<T>(0.0)};
+auto
+matrix_test(std::string name, measurement base, std::function<void(void)> callback)
+{
+    auto calc_time = measure([&]() -> std::size_t {
+        std::size_t cnt{};
+        time_type   period_{10000000us};
+        auto        start_time{std::chrono::system_clock::now()};
+        auto        last_time{std::chrono::system_clock::now()};
+        while ((last_time - start_time) <= period_) {
+            for (std ::size_t i{}; i < 1; i++, cnt++) {
+                callback();
+            }
+            last_time = std::chrono::system_clock::now();
+        }
+        return cnt;
+    });
+    if (base.us == 0) {
+        std::cout << name << "\tTime:\t" << calc_time.us << "\tCycles:\t" << calc_time.cycles
+                  << "\tx1" << std::endl;
+    } else {
+        double const in{static_cast<double>(base.cycles) / static_cast<double>(base.us)};
+        double const out{static_cast<double>(calc_time.cycles) / static_cast<double>(calc_time.us)};
+        std::cout << name << "\tTime:\t" << calc_time.us << "\tCycles:\t" << calc_time.cycles
+                  << "\tx" << static_cast<int>(out / in) << "."
+                  << ((static_cast<int>(out * 10 / in)) % 10) << std::endl;
+    }
+    return calc_time;
+}
 
-//     float const  fp32_abs_tol{1.0e-3f};
-//     double const fp32_rel_tol{0.0e-4f};
+template <class Type, std::size_t Size, optimization Optim>
+auto
+check(std::string name, measurement base)
+{
+    auto Aal = matrix_aligned<Type, Size, Size, Optim>::get_rand_matrix(0., 1.);
+    auto Bal = matrix_aligned<Type, Size, Size, Optim>::get_rand_matrix(0., 1.);
+    auto Cal = matrix_aligned<Type, Size, Size, Optim>::get_zeros_matrix();
 
-//     const size_t lda{k};
-//     const size_t ldb{n};
-//     const size_t ldc{n};
-
-//     // static_assert(lda >= k, "");
-//     // static_assert(ldb >= n, "");
-//     // static_assert(ldc >= n, "");
-//     cudaError_t err = cudaSuccess;
-
-//     std::cout << "Matrix Size: "
-//               << "M = " << m << " N = " << n << " K = " << k << std::endl;
-//     std::cout << "Matrix A: " << m << " x " << k << std::endl;
-//     std::cout << "Matrix B: " << k << " x " << n << std::endl;
-//     std::cout << "Matrix C: " << m << " x " << n << std::endl;
-//     std::cout << std::endl;
-
-//     cudaStream_t stream;
-//     err = cudaStreamCreate(&stream);
-//     if (err != cudaSuccess) {
-//         fprintf(stderr, "Failed to run stream (error code %s)!\n", cudaGetErrorString(err));
-//         exit(EXIT_FAILURE);
-//     }
-
-//     data_parameters<T> params{m, k, n, alpha, beta, (T*)A_host, (T*)B_host, C_host};
-//     copy_to_device(params);
-
-//     launch_gemm_kernel_v00(params, stream);
-
-//     copy_to_host(params, C_host);
-
-//     err = cudaStreamDestroy(stream);
-//     if (err != cudaSuccess) {
-//         fprintf(stderr, "Failed to destroy stream (error code %s)!\n", cudaGetErrorString(err));
-//         exit(EXIT_FAILURE);
-//     }
-//     return measurement{0, 0};
-// }
+    return matrix_test(name, base,
+                       [&]() { matrix_aligned<Type, Size, Size, Optim>::mult(*Aal, *Bal, *Cal); });
+}
 
 int
 main(void)
@@ -109,10 +118,11 @@ main(void)
     std::cout << "Matrix B: " << mmSize << " x " << mmSize << std::endl;
     std::cout << "Matrix C: " << mmSize << " x " << mmSize << std::endl;
     std::cout << std::endl;
-    matrix_aligned<float, mmSize, mmSize, optimization::cuda_naive>::mult(*h_A, *h_B, *h_C);
 
-    // cuda_prep(numElements, h_A->data_, h_B->data_, h_C->data_);
-    // profile_gemm<float>(mmSize, mmSize, mmSize, h_A->data_, h_B->data_, h_C->data_);
+    std::string str = "F ";
+    check<float, mmSize, optimization::cuda_naive>(
+        " "s + std::to_string(mmSize) + "\t" + str + "Naive   ", measurement{0, 0});
+    // matrix_aligned<float, mmSize, mmSize, optimization::cuda_naive>::mult(*h_A, *h_B, *h_C);
 
     printf("Done\n");
     return 0;
