@@ -1,0 +1,88 @@
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  cert-*,
+  cppcoreguidelines-*,
+  -cert-dcl21-cpp,
+  -cert-oop54-cpp,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-integer-division,
+  -bugprone-misplaced-widening-cast,
+  -bugprone-narrowing-conversions,
+  -bugprone-signed-char-misuse,
+  -bugprone-string-integer-assignment,
+  -bugprone-suspicious-include,
+  -bugprone-unchecked-optional-access,
+  -clang-analyzer-nullability.NullablePassedToNonnull,
+  -clang-analyzer-optin.cplusplus.VirtualCall,
+  -clang-analyzer-optin.osx.*,
+  -clang-analyzer-osx.*,
+  -clang-analyzer-unix.Malloc,
+  -clang-analyzer-core.CallAndMessage,
+  -clang-analyzer-core.NullDereference,
+  -clang-analyzer-core.NonNullParamChecker,
+  -clang-analyzer-cplusplus.NewDelete,
+  -misc-misplaced-const,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-avoid-c-arrays,
+  -modernize-macro-to-enum,
+  -modernize-return-braced-init-list,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -modernize-use-default-member-init,
+  -performance-inefficient-string-concatenation,
+  -performance-no-int-to-ptr,
+  -readability-braces-around-statements,
+  -readability-container-contains,
+  -readability-convert-member-functions-to-static,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-function-size,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-uppercase-literal-suffix,
+  -readability-avoid-const-params-in-decls,
+  -readability-redundant-member-init,
+  -readability-static-accessed-through-instance,
+CheckOptions:
+  - {key: readability-identifier-naming.ClassCase,                   value: lower_case}
+  - {key: readability-identifier-naming.ClassConstantCase,           value: lower_case}
+  - {key: readability-identifier-naming.ConstexprVariableCase,       value: lower_case}
+  - {key: readability-identifier-naming.EnumCase,                    value: lower_case}
+  - {key: readability-identifier-naming.EnumConstantCase,            value: lower_case}
+  - {key: readability-identifier-naming.FunctionCase,                value: lower_case}
+  - {key: readability-identifier-naming.GlobalConstantCase,          value: lower_case}
+  - {key: readability-identifier-naming.GlobalConstantPrefix,        value: g_}
+  - {key: readability-identifier-naming.GlobalConstantPointerCase,   value: lower_case}
+  - {key: readability-identifier-naming.GlobalConstantPointerPrefix, value: g_}
+  - {key: readability-identifier-naming.MacroDefinitionCase,         value: UPPER_CASE}
+  - {key: readability-identifier-naming.MethodCase,                  value: lower_case}
+  - {key: readability-identifier-naming.NamespaceCase,               value: lower_case}
+  - {key: readability-identifier-naming.ParameterCase,               value: lower_case}
+  - {key: readability-identifier-naming.ProtectedMemberSuffix,       value: _}
+  - {key: readability-identifier-naming.PrivateMemberCase,           value: lower_case}
+  - {key: readability-identifier-naming.PrivateMemberSuffix,         value: _}
+  - {key: readability-identifier-naming.PublicMemberCase,            value: lower_case}
+  - {key: readability-identifier-naming.StaticConstantCase,          value: lower_case}
+  - {key: readability-identifier-naming.TemplateParameterCase,       value: CamelCase}
+  - {key: readability-identifier-naming.TypeAliasCase,               value: lower_case}
+  - {key: readability-identifier-naming.TypedefCase,                 value: lower_case}
+  - {key: readability-identifier-naming.UnionCase,                   value: lower_case}
+  - {key: readability-identifier-naming.VariableCase,                value: lower_case}
+WarningsAsErrors: '*'
+AnalyzeTemporaryDtors: false
+FormatStyle: none
+UseColor: true
