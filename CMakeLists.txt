@@ -3,7 +3,7 @@ project(cuda_test CUDA CXX)
 
 # Set CUDA architectures if not already set
 if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-    set(CMAKE_CUDA_ARCHITECTURES 53)
+    set(CMAKE_CUDA_ARCHITECTURES 75)
 endif()
 
 # Enable C++11

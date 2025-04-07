@@ -9,13 +9,15 @@
 
 using namespace xitren::math;
 
+// GEMM kernel v01.
+// Coalesced read and write from global memory.
 template <typename T>
 __global__ void
-gemm_v00(data_parameters<T> pars)
+gemm_v01(data_parameters<T> pars)
 {
     // Compute the row and column of C that this thread is responsible for.
-    size_t const C_row_idx{blockIdx.x * blockDim.x + threadIdx.x};
-    size_t const C_col_idx{blockIdx.y * blockDim.y + threadIdx.y};
+    size_t const C_col_idx{blockIdx.x * blockDim.x + threadIdx.x};
+    size_t const C_row_idx{blockIdx.y * blockDim.y + threadIdx.y};
 
     // Each thread compute
     // C[C_row_idx, C_col_idx] = alpha * A[C_row_idx, :] * B[:, C_col_idx] +
@@ -31,20 +33,19 @@ gemm_v00(data_parameters<T> pars)
 
 template <typename T>
 void
-launch_gemm_kernel_v00(data_parameters<T> pars, cudaStream_t stream)
+launch_gemm_kernel_v01(data_parameters<T> pars, cudaStream_t stream)
 {
     dim3 const block_dim{32U, 32U, 1U};
-    dim3 const grid_dim{(static_cast<unsigned int>(pars.m) + block_dim.x - 1U) / block_dim.x,
-                        (static_cast<unsigned int>(pars.n) + block_dim.y - 1U) / block_dim.y, 1U};
-    gemm_v00<T><<<grid_dim, block_dim, 0U, stream>>>(pars);
+    dim3 const grid_dim{(static_cast<unsigned int>(pars.n) + block_dim.x - 1U) / block_dim.x,
+                        (static_cast<unsigned int>(pars.m) + block_dim.y - 1U) / block_dim.y, 1U};
+    gemm_v01<T><<<grid_dim, block_dim, 0U, stream>>>(pars);
 }
 
 namespace xitren {
 namespace math {
 
 template <std::uint_fast32_t Rows, std::uint_fast32_t Columns, typename T>
-class gemm_core<Rows, Columns, T, optimization::cuda_naive> : gemm_core<Rows, Columns, T, optimization::naive> {
-    static_assert(std::is_same<T, float>() || std::is_same<T, double>(), "");
+class gemm_core<Rows, Columns, T, optimization::cuda_coalesced> : gemm_core<Rows, Columns, T, optimization::naive> {
 
 public:
     template <std::uint_fast32_t Other>
@@ -66,7 +67,7 @@ public:
         data_parameters<T> params{Rows, Other, Columns, alpha, beta, (T*)a, (T*)b, c};
         copy_to_device<T>(params);
 
-        launch_gemm_kernel_v00<T>(params, stream);
+        launch_gemm_kernel_v01<T>(params, stream);
 
         copy_to_host<T>(params, c);
 

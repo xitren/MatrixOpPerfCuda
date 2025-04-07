@@ -17,7 +17,16 @@
 namespace xitren {
 namespace math {
 
-enum class optimization { naive, cuda_naive };
+enum class optimization {
+    naive,
+    cuda_naive,
+    cuda_coalesced,
+    cuda_2d_block,
+    cuda_2d_block_1d_thread,
+    cuda_2d_block_2d_thread,
+    cuda_2d_block_2d_warp_2d_thread_transpose,
+    cuda_2d_block_2d_warp_2d_thread_transpose_wmma
+};
 
 template <std::uint_fast32_t Rows, std::uint_fast32_t Columns, typename Type, optimization Alg>
 class gemm_core {
