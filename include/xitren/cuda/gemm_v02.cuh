@@ -86,6 +86,7 @@ namespace math {
 
 template <std::uint_fast32_t Rows, std::uint_fast32_t Columns, typename T>
 class gemm_core<Rows, Columns, T, optimization::cuda_2d_block> : gemm_core<Rows, Columns, T, optimization::naive> {
+    static_assert(std::is_same<T, float>() || std::is_same<T, double>(), "");
 
 public:
     template <std::uint_fast32_t Other>
